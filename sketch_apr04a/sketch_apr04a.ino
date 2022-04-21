@@ -9,7 +9,8 @@
 const char* ssid = "NaszaSiecExt";
 const char* password = "1234123412";
 String serverName = "http://192.168.9.13";
-
+bool getesp = false;
+int getdaniel = 0;
 Adafruit_MCP23X17 mcp;
 ESP8266WebServer server(80);
 
@@ -19,48 +20,10 @@ void handleRoot() {
   server.send(200, "text/html", s); //Send web page
   Serial.println("DANIEL ZGASIL");
 }
-
-void GETDANIEL() {
-  if (!mcp.digitalRead(2))
-  {
-
-    while (!mcp.digitalRead(2))
-    {
-      delay(20);
-    }
-    if (WiFi.status() == WL_CONNECTED) {
-      WiFiClient client;
-      HTTPClient http;
-
-      String serverPath = serverName + "/";
-
-      // Your Domain name with URL path or IP address with path
-      http.begin(client, serverPath.c_str());
-
-      // Send HTTP GET request
-      int httpResponseCode = http.GET();
-
-      if (httpResponseCode > 0) {
-        Serial.print("HTTP Response code: ");
-        Serial.println(httpResponseCode);
-        String payload = http.getString();
-        Serial.println(payload);
-      }
-      else {
-        Serial.print("Error code: ");
-        Serial.println(httpResponseCode);
-      }
-      // Free resources
-      http.end();
-    }
-  }
-  
-}
 void setup () {
 
   Serial.begin(115200);
   Wire.begin();
-
   while (!mcp.begin_I2C())
   {
     Serial.println("mcp error.");
@@ -84,9 +47,38 @@ void setup () {
   server.begin();                  //Start server
   Serial.println("HTTP server started");
 }
-
 void loop() {
-  server.handleClient(); 
-  GETDANIEL;
 
+  while (mcp.digitalRead(2)) {
+    server.handleClient();
+    if (!mcp.digitalRead(2)) {
+      Serial.println("GET");
+      if (WiFi.status() == WL_CONNECTED) {
+        WiFiClient client;
+        HTTPClient http;
+
+        String serverPath = serverName + "/";
+
+        // Your Domain name with URL path or IP address with path
+        http.begin(client, serverPath.c_str());
+
+        // Send HTTP GET request
+        int httpResponseCode = http.GET();
+
+        if (httpResponseCode > 0) {
+          Serial.print("HTTP Response code: ");
+          Serial.println(httpResponseCode);
+          String payload = http.getString();
+          Serial.println(payload);
+        }
+        else {
+          Serial.print("Error code: ");
+          Serial.println(httpResponseCode);
+        }
+        // Free resources
+        getdaniel = 0;
+        http.end();
+      }
+    }
+  }
 }
